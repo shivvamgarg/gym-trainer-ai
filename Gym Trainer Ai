@@ -16,6 +16,10 @@ export default function GymTrainerAI() {
   const [streak, setStreak] = useState(0);
   const [progressHistory, setProgressHistory] = useState([]);
   const [customWorkout, setCustomWorkout] = useState([]);
+  const [timer, setTimer] = useState(30);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [workoutHistory, setWorkoutHistory] = useState([]);
+  const [aiTips, setAiTips] = useState("");
 
   const days = ["Chest", "Back", "Legs", "Arms", "Shoulders", "Full Body"];
 
@@ -28,9 +32,31 @@ export default function GymTrainerAI() {
     "Full Body": ["Burpees - 3 sets", "Squats - 4 sets", "Deadlifts - 3 sets", "Push-ups - 4 sets"]
   };
 
+  useEffect(() => {
+    let interval;
+    if (isTimerRunning && timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (timer === 0) {
+      setIsTimerRunning(false);
+      alert("Time's up! Move to the next exercise.");
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning, timer]);
+
+  const aiWorkoutTips = [
+    "Keep your back straight during deadlifts!",
+    "Slow and controlled reps are better for muscle growth.",
+    "Always warm up before starting heavy lifts!",
+    "Hydration is key to muscle recovery.",
+    "Proper form is more important than heavy weights."
+  ];
+
   const handleSelectDay = (selectedDay) => {
     setDay(selectedDay);
     setWorkout(workouts[selectedDay]);
+    setAiTips(aiWorkoutTips[Math.floor(Math.random() * aiWorkoutTips.length)]);
   };
 
   const addCustomExercise = (exercise) => {
@@ -41,6 +67,12 @@ export default function GymTrainerAI() {
     setProgress((prev) => Math.min(prev + 20, 100));
     setStreak((prev) => prev + 1);
     setProgressHistory([...progressHistory, progress + 20]);
+    setWorkoutHistory([...workoutHistory, { day, workout: [...workout, ...customWorkout] }]);
+  };
+
+  const startTimer = () => {
+    setIsTimerRunning(true);
+    setTimer(30);
   };
 
   return (
@@ -64,6 +96,7 @@ export default function GymTrainerAI() {
         <Card className="p-4 shadow-lg">
           <CardContent>
             <h2 className="text-xl font-semibold">{day} Workout</h2>
+            <p className="italic text-sm">💡 AI Tip: {aiTips}</p>
             <ul className="text-left mt-2">
               {workout.map((exercise, index) => (
                 <li key={index} className="py-1">✅ {exercise}</li>
@@ -77,6 +110,8 @@ export default function GymTrainerAI() {
                 <li key={index} className="py-1">✅ {exercise}</li>
               ))}
             </ul>
+            <h3 className="text-lg font-semibold mt-4">⏳ Exercise Timer: {timer}s</h3>
+            {!isTimerRunning && <Button onClick={startTimer} className="mt-2">Start Timer</Button>}
             <Progress value={progress} className="mt-4" />
             <p className="mt-2">Progress: {progress}%</p>
             <p className="mt-2 font-semibold text-green-600">🔥 Streak: {streak} days</p>
